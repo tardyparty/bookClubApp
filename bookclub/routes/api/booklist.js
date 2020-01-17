@@ -177,4 +177,66 @@ router.delete('/:booklist/comments/:comment', auth.required, function(req, res, 
     }
 });
 
+// query endpoints to show booklists
+router.get('/', auth.optional, function(rq, res, next) {
+    let query = {};
+    let limit = 20;
+    let offset = 0;
+
+    // filer the # of booklists
+    if (typeof req.query.limit !== 'undefined') {
+        limit = req.query.limit;
+    }
+
+    // start counting at a later #
+    if (typeof req.query.offset !== 'undefined') {
+        offset = req.query.offset;
+    }
+
+    // filer by tag
+    if (typeof req.query.tag !== 'undefined') {
+        query.tagList = {"$in" : [req.query.tag]};
+    }
+
+    Promise.all([
+        req.query.author ? User.findOne({ username: req.query.author }) : null,
+        req.query.favorited ? User.findOne({ user.query.favorited}) : null
+    ]).then(function(results) {
+        let author = results[0];
+        let favoriter = results[1];
+
+        if (author) {
+            query.author = author._id;
+        }
+
+        if (favoriter) {
+            query._id = {$in: favoriter.favorites};
+        } else {
+            query._id = {$in: []};
+        }
+
+        return Promise.all([
+            BookList.find(query)
+                .limit(Number(limit))
+                .skip(Number(offset))
+                .sort({ createdAt: 'desc' })
+                .populate('author')
+                .exec(),
+            BookList.count(query).exec(),
+            req.payload ? User.findById(req.payload.id) : null
+        ]).then(function(results) {
+            let booklists = results[0];
+            let booklistsCount = results[1];
+            let user = results[2];
+
+            return res.json({
+                booklists: booklists.map(function(booklist) {
+                    return booklist.toJSONFor(user)
+                }),
+                booklistsCount: booklistsCount
+            });
+        }).catch(next);
+    }).catch(next);
+});
+
 module.exports = router;
