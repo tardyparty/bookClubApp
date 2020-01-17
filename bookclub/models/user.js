@@ -20,6 +20,7 @@ let UserSchema = new mongoose.Schema({
         index: true},
     bio: String,
     image: String,
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'BookList' }],
     hash: String,
     salt: String
 }, {timestamps: true});
@@ -66,6 +67,28 @@ UserSchema.methods.toProfileJSONFor = function(user) {
         image: this.image,
         following: false 
     };
+};
+
+// user can favorite a booklist
+UserSchema.methods.favorite = function(id) {
+    if (this.favorites.indexOf(id) === -1) {
+        this.favorites.push(id);
+    }
+
+    return this.save();
+};
+
+// user can unfavorite a booklist
+UserSchema.methods.unfavorite = function(id) {
+    this.favorites.remove(id);
+    return this.save();
+};
+
+// shows whether user has favorited booklist previously
+UserSchema.methods.isFavorite = function(id) {
+    return this.favorites.some(function(favoriteId) {
+        return favoriteId.toString(0 === id.toString())
+    });
 };
 
 
