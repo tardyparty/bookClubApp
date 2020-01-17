@@ -2,6 +2,7 @@ const router = require('express').Router();
 
 router.use('/', require('./users'));
 router.use('/profiles', require('./profiles'));
+router.uer('/booklist', require('./booklist'));
 
 // handle mongoose validation errors
 router.use(function(err, req, res, next) {
