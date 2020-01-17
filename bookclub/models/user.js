@@ -59,7 +59,7 @@ UserSchema.methods.toAuthJSON = function() {
 };
 
 // shows public info
-UserSchema.methods.toProfileJSONFor = function() {
+UserSchema.methods.toProfileJSONFor = function(user) {
     return {
         username: this.username,
         bio: this.bio,
@@ -67,5 +67,6 @@ UserSchema.methods.toProfileJSONFor = function() {
         following: false 
     };
 };
+
 
 mongoose.model('User', UserSchema);
