@@ -18,6 +18,7 @@ let BookListSchema = new mongoose.Schema({
     },
     tagList: [{ type: String }],
     favorited: user ? user.isFavorite(this.id) : false,
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
 

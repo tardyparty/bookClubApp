@@ -113,4 +113,68 @@ router.delete('/:booklist/favorite', auth.required, function(req, res, next) {
     }).catch(next);
 });
 
+// create new comment on booklist
+router.post('/:booklist/comments', auth.required, function(req, res, next) {
+    User.findById(req.payload.id).then(function(user) {
+        if (!user) { return res.sendStatus(401); }
+
+        let comment = new Comment(req.body.comment);
+        comment.booklist = req.booklist;
+        comment.author = user;
+
+        return comment.save().then(function() {
+            req.booklist.comments.push(comment);
+
+            return req.booklist.save().then(function(booklist) {
+                res.json({ comment: comment.toJSONFor(user)});
+            });
+        });
+    }).catch(next);
+});
+
+// retrieve all comments for booklist
+router.get('/:booklist/comments', auth.optional, function(req, res, next) {
+    Promise.resolve(req.payload ? User.findById(req.payload.id) : null).then(function(user) {
+        return req.booklist.populate({
+            path: 'comments',
+            populate: {
+                path: 'author',
+            },
+            options: {
+                sort: {
+                    createdAt: 'desc'
+                }
+            }
+        }).execPopulate().then(function(booklist) {
+            return res.json({ comments: req.booklist.comments.map(function(comment) {
+                return comment.toJSONFor(user);
+            })});
+        });
+    }).catch(next);
+});
+
+router.param('comment', function(req, res, next, id) {
+    Comment.findById(id).then(function(comment) {
+        if (!comment) { return res.sendStatus(404); } 
+
+        req.comment = comment;
+
+        return next();
+    }).catch(next);
+});
+
+// user can delete comment
+router.delete('/:booklist/comments/:comment', auth.required, function(req, res, next) {
+    if (req.comment.author.toString() === req.payload.id.toString()) {
+        req.booklist.comments.remove(rew.comment._id);
+        req.booklist.save()
+        .then(Comment.find({_id: req.comment._id}).remove().exec())
+        .then(function() {
+            res.sendStatus(204);
+        });
+    } else {
+        res.sendStatus(403);
+    }
+});
+
 module.exports = router;
