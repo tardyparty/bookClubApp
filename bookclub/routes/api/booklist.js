@@ -239,4 +239,41 @@ router.get('/', auth.optional, function(rq, res, next) {
     }).catch(next);
 });
 
+// feed of booklists based on who the user is following
+router.get('/feed', auth.required, function(req, res, next) {
+    var limit = 20;
+    var offset = 0;
+  
+    if(typeof req.query.limit !== 'undefined'){
+      limit = req.query.limit;
+    }
+  
+    if(typeof req.query.offset !== 'undefined'){
+      offset = req.query.offset;
+    }
+  
+    User.findById(req.payload.id).then(function(user){
+      if (!user) { return res.sendStatus(401); }
+  
+      Promise.all([
+        BookList.find({ author: {$in: user.following}})
+          .limit(Number(limit))
+          .skip(Number(offset))
+          .populate('author')
+          .exec(),
+        BookList.count({ author: {$in: user.following}})
+      ]).then(function(results){
+        var booklists = results[0];
+        var booklistsCount = results[1];
+  
+        return res.json({
+          booklists: booklists.map(function(article){
+            return article.toJSONFor(user);
+          }),
+          booklistsCount: booklistsCount
+        });
+      }).catch(next);
+    });
+  });
+
 module.exports = router;
