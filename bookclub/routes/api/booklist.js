@@ -83,4 +83,34 @@ router.delete('./:booklist', auth.required, function(req, res, next) {
     });
 });
 
+// endpoints for favoriting
+router.post('/:booklist/favorite', auth.required, function(req, res, next) {
+    let booklistId = req.booklist._id;
+
+    User.findById(req.payload.id).then(function(user) {
+        if (!user) { return res.sendStatus(401); }
+
+        return user.favorite(booklistId).then(function() {
+            return req.booklist.updateFavoriteCount().then(function(booklist) {
+                return res.json({ booklist: booklist.toJSONFor(user)});
+            });
+        });
+    }).catch(next);
+});
+
+// endpint to unfavorite 
+router.delete('/:booklist/favorite', auth.required, function(req, res, next) {
+    let booklistId = req.booklist._id;
+
+    User.findById(req.payload.id).then(function(user) {
+        if (!user) { return res.sendStatus(401); }
+
+        return user.unfavorite(booklistId).then(function() {
+            return req.booklist.updateFavoriteCount().then(function(booklist) {
+                return res.json({ booklist: booklist.toJSONFor(user)});
+            });
+        });
+    }).catch(next);
+});
+
 module.exports = router;
