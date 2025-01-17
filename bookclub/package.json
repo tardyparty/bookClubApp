@@ -15,7 +15,7 @@
     "express-session": "^1.17.0",
     "http": "0.0.0",
     "methods": "^1.1.2",
-    "mongoose": "^5.8.7",
+    "mongoose": "^8.9.5",
     "mongoose-unique-validator": "^2.0.3",
     "passport": "^0.4.1",
     "path": "^0.12.7",
